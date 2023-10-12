@@ -46,6 +46,7 @@ Deploy it:
 sam deploy
 ```
 
+You can proceed with default settings for all options, except for GamingAPI may not have authorization defined, Is this okay?, which must be explicitly answered y.
 
 ```
 Configuring SAM deploy
