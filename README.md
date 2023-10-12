@@ -5,15 +5,18 @@ This project is a sample project to access Amazon Bedrock from a Quarkus applica
 The main method is inside the LLMService.java:
 
 ```java
+public class LLMService {
+    //...    
+
     @GET
     @Path("/ask")
     public String askBedrock(@QueryParam("question") String question) {
         final ObjectMapper objectMapper = new ObjectMapper();
-        String response="";
+        String response = "";
         try (BedrockRuntimeClient bedrockClient = BedrockRuntimeClient.builder()
                 .build()) {
             InvokeModelRequest invokeModelRequest = InvokeModelRequest.builder()
-                    .body(SdkBytes.fromString("{\"inputText\" : \""+
+                    .body(SdkBytes.fromString("{\"inputText\" : \"" +
                             question + "\"}", Charset.defaultCharset()))
                     .modelId(llm)
                     .build();
@@ -22,15 +25,35 @@ The main method is inside the LLMService.java:
             BedrockResult bedrockResult = objectMapper.readValue(
                     imResponse.body().asUtf8String(), BedrockResult.class);
             response = bedrockResult.getResults()[0].getOutputText();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             return "Error" + e.getMessage();
         }
         return "Success: " + response;
     }
+    //...
+}
 ```
 
+We will also provide some REST interfaces to check the used llm and change:
 
+```java
+public class LLMService {
+    //...    
+    private static String llm = "amazon.titan-tg1-large";
+    @GET
+    @Path("/llm")
+    public void getLlm(@QueryParam("model") String llmname) {
+        llm = llmname;
+    }
+    @GET
+    @Path("/llm_in_use")
+    public String getLlm() {
+        return llm;
+    }
+    //...
+}
+
+```
 
 ## Build & Deploy
 
@@ -74,53 +97,35 @@ Configuring SAM deploy
 
 ```
 
+You will see the generated output like this:
 
+```
+---------------------------------------------------------------------------------
+Key                 QuarkusBedrock                                                                                                           
+Description         URL for application                                                                                                      
+Value               https://someurl.execute-api.us-east-1.amazonaws.com/                                                                  
+---------------------------------------------------------------------------------
 
-You can run your application in dev mode that enables live coding using:
-```shell script
-./mvnw compile quarkus:dev
+Successfully created/updated stack - qbr in us-east-1
 ```
 
-> **_NOTE:_**  Quarkus now ships with a Dev UI, which is available in dev mode only at http://localhost:8080/q/dev/.
+Now you can access your REST interface to Amazon Bedrock:
 
-## Packaging and running the application
-
-The application can be packaged using:
-```shell script
-./mvnw package
 ```
-It produces the `quarkus-run.jar` file in the `target/quarkus-app/` directory.
-Be aware that it’s not an _über-jar_ as the dependencies are copied into the `target/quarkus-app/lib/` directory.
-
-The application is now runnable using `java -jar target/quarkus-app/quarkus-run.jar`.
-
-If you want to build an _über-jar_, execute the following command:
-```shell script
-./mvnw package -Dquarkus.package.type=uber-jar
+https://someurl.execute-api.us-east-1.amazonaws.com/bedrock/ask?question=Your question to model
 ```
 
-The application, packaged as an _über-jar_, is now runnable using `java -jar target/*-runner.jar`.
+And you can check the default model:
 
-## Creating a native executable
-
-You can create a native executable using: 
-```shell script
-./mvnw package -Dnative
+```
+https://someurl.execute-api.us-east-1.amazonaws.com/bedrock/llm_in_use
 ```
 
-Or, if you don't have GraalVM installed, you can run the native executable build in a container using: 
-```shell script
-./mvnw package -Dnative -Dquarkus.native.container-build=true
+You can change the llm:
+
+```
+https://someurl.execute-api.us-east-1.amazonaws.com/bedrock/llm?model=amazon.titan-tg1-large
 ```
 
-You can then execute your native executable with: `./target/quarkus-bedrock-1.0.0-SNAPSHOT-runner`
 
-If you want to learn more about building native executables, please consult https://quarkus.io/guides/maven-tooling.
 
-## Provided Code
-
-### RESTEasy Reactive
-
-Easily start your Reactive RESTful Web Services
-
-[Related guide section...](https://quarkus.io/guides/getting-started-reactive#reactive-jax-rs-resources)
