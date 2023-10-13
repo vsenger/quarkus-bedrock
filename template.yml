@@ -15,6 +15,13 @@ Resources:
         ApplyOn: PublishedVersions
       AutoPublishAlias: snap
       Timeout: 15
+      Policies:
+        - Statement:
+            - Sid: bedrockall
+              Effect: Allow
+              Action:
+                - bedrock:*
+              Resource: '*'
       Environment:
         Variables:
           JAVA_TOOL_OPTIONS: "-XX:+TieredCompilation -XX:TieredStopAtLevel=1"
